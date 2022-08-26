@@ -54,6 +54,7 @@ begin
 	:new.wyp_plan_data_zwr := :new.wyp_data + 30;
 end;
 
+-- trigger sprawdza, czy dany klient korzysta obecnie z abonamentu
 create or replace trigger t_czy_ma_abonament before insert on bibl_abonament
 for each row
 declare
@@ -66,7 +67,7 @@ begin
     end if;
 end;
 /
-
+-- trigger wstawia okres abonamentu
 create or replace trigger t_okres_abonamentu before insert or update on bibl_abonament
 for each row
 declare
@@ -77,7 +78,7 @@ begin
     :new.abn_data_do := :new.abn_data_od + v_okres;
 end;
 /
-
+-- trigger sprawdza, czy dany egzemplarz jest dostępny
 create or replace trigger t_sprawdz_dostepnosc before insert on bibl_wypozyczenia
 for each row
 declare
@@ -86,7 +87,7 @@ v_data_zwrotu date;
 begin
 	select wyp_real_data_zwr into v_data_zwrotu
     from bibl_wypozyczenia
-    where wyp_id = :new.wyp_id
+    where wyp_egz_id = :new.wyp_egz_id
     order by wyp_data desc
     fetch first 1 row only;
     if v_data_zwrotu is null then 
@@ -97,7 +98,7 @@ exception
 	dbms_output.put_line('to pierwsze wypożyczenie tej książki');
 end;
 /
-
+-- trigger wstawia rekord do tabeli bibl_kary, jeśli realna data zwrotu książki jest późniejsza niż planowana
 create or replace trigger t_kara after insert or update on bibl_wypozyczenia
 for each row
 declare
